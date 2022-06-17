@@ -1,127 +1,151 @@
-import React, { useEffect, useState } from "react";
+import React, { Component } from "react";
 import { MDBBtn, MDBContainer, MDBInput } from "mdb-react-ui-kit";
-import * as Realm from "realm-web";
+import axios from "axios";
 
-const APP_ID = "62a53c841131ef1ef9e98b83";
-//to write
-const app = new Realm.App({ id: APP_ID });
-//to retrive
-const retrive = Realm.App.getApp(APP_ID);
-const {
-  BSON: { ObjectId },
-} = Realm;
+const api = axios.create({
+  baseURL: "http://localhost:3000",
+});
 
-function App() {
-  const [uName, setUname] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [heightt, setHeights] = useState("");
-  const [heightState, setHeightState] = useState(null);
+// async function sendToEmail(client, total, email, uName) {
+//   // Generate test SMTP service account from ethereal.email
+//   // Only needed if you don't have a real mail account for testing
+//   // const testAccount = await nodemailer.createTestAccount();
+//   // // create reusable transporter object using the default SMTP transport
+//   // const transporter = nodemailer.createTransport({
+//   //   host: `${email}`,
+//   //   port: 587,
+//   //   secure: false, // true for 465, false for other ports
+//   //   auth: {
+//   //     user: testAccount.user, // generated ethereal user
+//   //     pass: testAccount.pass, // generated ethereal password
+//   //   },
+//   // });
+//   // await transporter.sendMail({
+//   //   from: `${email}`,
+//   //   to: `${email}`,
+//   //   subject: "Average height",
+//   //   html: `<div className="email" style="
+//   //       border: 1px solid black;
+//   //       padding: 20px;
+//   //       font-family: sans-serif;
+//   //       line-height: 2;
+//   //       font-size: 20px;
+//   //       ">
+//   //       <h2>Here is your email!</h2>
+//   //       <p>${email}</p>
+//   //        <p>${uName}</p>
+//   //         <p>${total}</p>
+//   //       <p>All the best, Darwin</p>
+//   //        </div>
+//   //   `,
+//   // });
+// }
 
-  const loginEmailPassword = async () => {
-    // Create an anonymous credential
-    const credentials = Realm.Credentials.emailPassword(email, password);
-    try {
-      // Authenticate the user
-      const user = await app.logIn(credentials);
-      // `App.currentUser` updates to match the logged in user
-      console.assert(user.id === app.currentUser.id);
-      writeToMongo(user.id);
-      return user;
-    } catch (err) {
-      console.error("Failed to log in", err);
+export default class App extends Component {
+  state = {
+    uName: "",
+    email: "",
+    password: "",
+    height: "",
+  };
+  constructor(props) {
+    super(props);
+  }
+
+  appJs = async (event) => {
+    api
+      .post("/api", this.state)
+      .then(() => window.alert("user details has been saved"));
+  };
+
+  setUname = async (event) => {
+    const names = event.target.value;
+    if (names == "") {
+      window.alert("Please fill in your name");
+    } else {
+      this.setState({ uName: names });
     }
   };
 
-  const writeToMongo = async (id) => {
-    const uid = id;
-    const mongo = app.currentUser.mongoClient("databaseCluster");
-    const collection = await mongo
-      .db("databaseCluster")
-      .collection("ListofUserHeight")
-      .insertOne({
-        _id: uid,
-        height: heightt,
-        uName: uName,
-      })
-      .then(() => {
-        alert("Your height has been successfully submitted");
-        readFromMongo();
-      })
-      .catch((error) => alert("Error: ", error, " or check your "));
+  setHeights = async (event) => {
+    const heightss = event.target.value;
+    const regex = /([1 - 9] | 1[0 - 2])/;
+    if (heightss == "") {
+      window.alert("Please fill in your height");
+    } else {
+      this.setState({ height: heightss });
+    }
   };
 
-  const readFromMongo = async () => {
-    const mongo = app.currentUser.mongoClient("databaseCluster");
-    const collection = await mongo
-      .db("databaseCluster")
-      .collection("ListofUserHeight");
-    const count = collection.count();
-    const average = collection.findOne({
-      height: "height",
-    });
-    const finalHeight = parseFloat(average / count);
-
-    sendToEmail();
+  setEmail = async (event) => {
+    const emails = event.target.value;
+    const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    if (emails == "") {
+      window.alert("Please fill in your email");
+    } else {
+      this.setState({ email: emails });
+    }
   };
 
-  const sendToEmail = async () => {
-    const request = await app.emailPasswordAuth
-      .confirmUser({ token, tokenId })
-      .then((confirm) => {
-        alert("email has been sent");
-      });
+  setPassword = async (event) => {
+    const passwords = event.target.value;
+    if (passwords == "") {
+      window.alert("Password is empty");
+    } else {
+      this.setState({ password: passwords });
+    }
   };
 
-  useEffect(() => {}, []);
-  return (
-    <MDBContainer fluid style={{ height: "100vh" }}>
-      <div class="background-image: url('https://mdbootstrap.com/img/Photos/Others/img%20%2848%29.webp'); background-repeat: no-repeat; background-size: cover; background-position: center center;"></div>
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
-        <div className="text-center justify-content-space-between">
-          <MDBInput
-            label="Name"
-            id="typeText"
-            type="text"
-            onChange={(uNames) => setUname(uNames)}
-            style={{ marginTop: 10 }}
-          />
-          <MDBInput
-            label="Height"
-            id="typeNumber"
-            type="number"
-            onChange={(heights) => setHeights(heights)}
-            style={{ marginTop: 10 }}
-          />
-          <MDBInput
-            label="Email"
-            id="typeEmail"
-            type="email"
-            onChange={(mail) => setEmail(mail)}
-            style={{ marginTop: 10 }}
-          />
-          <MDBInput
-            label="Password"
-            id="typePassword"
-            type="password"
-            onChange={(pass) => setPassword(pass)}
-            style={{ marginTop: 10 }}
-          />
-          <MDBBtn
-            className="text-dark"
-            color="light"
-            style={{ marginTop: 30, width: "100%" }}
-            onClick={() => loginEmailPassword()}
+  render() {
+    return (
+      <div className="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSngyydjr-vCNS6hYnFssybw1BMuUeXz9_Apw&usqp=CAU'); background-repeat: no-repeat; background-size: cover; background-position: center center;">
+        <MDBContainer fluid style={{ height: "100vh" }}>
+          <div
+            className="d-flex justify-content-center align-items-center"
+            style={{ height: "100vh" }}
           >
-            Submit
-          </MDBBtn>
-        </div>
+            <div className="text-center justify-content-space-between">
+              <MDBInput
+                label="Name"
+                id="typeText"
+                type="text"
+                onChange={this.setUname}
+                style={{ marginTop: 10 }}
+              />
+              <MDBInput
+                label="Height"
+                id="typeNumber"
+                type="number"
+                onChange={this.setHeights}
+                style={{ marginTop: 10 }}
+              />
+              <MDBInput
+                label="Email"
+                id="typeEmail"
+                type="email"
+                onChange={this.setEmail}
+                style={{ marginTop: 10 }}
+              />
+              <MDBInput
+                label="Password"
+                id="typePassword"
+                type="password"
+                //onEncrypted={true}
+                onChange={this.setPassword}
+                style={{ marginTop: 10 }}
+              />
+              <MDBBtn
+                className="text-dark"
+                color="light"
+                style={{ marginTop: 30, width: "100%" }}
+                onClick={this.appJs}
+              >
+                Submit
+              </MDBBtn>
+            </div>
+          </div>
+        </MDBContainer>
       </div>
-    </MDBContainer>
-  );
+    );
+  }
 }
-
-export default App;
